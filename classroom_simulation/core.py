@@ -1,6 +1,7 @@
 import honeycomb_io
 import pandas as pd
 import tqdm
+import tqdm.notebook
 import datetime
 import dateutil
 import random
@@ -22,7 +23,9 @@ def generate_interaction_data(
     tray_carry_duration_seconds=10,
     material_usage_duration_minutes=40,
     step_size_seconds=0.1,
-    output_format='list'
+    output_format='list',
+    progress_bar=False,
+    notebook=False,
 ):
     if weekdays_only:
         freq='B'
@@ -36,7 +39,14 @@ def generate_interaction_data(
     date_list = [datetime.date() for datetime in date_range]
     tray_interactions = list()
     material_interactions = list()
-    for target_date in date_list:
+    if progress_bar:
+        if notebook:
+            date_iterator = tqdm.notebook.tqdm(date_list)
+        else:
+            date_iterator = tqdm.tqdm(date_list)
+    else:
+        date_iterator = date_list
+    for target_date in date_iterator:
         tray_interactions_day, material_interactions_day = generate_interaction_data_day(
             target_date=target_date,
             time_zone_name=time_zone_name,
@@ -48,7 +58,9 @@ def generate_interaction_data(
             tray_carry_duration_seconds=tray_carry_duration_seconds,
             material_usage_duration_minutes=material_usage_duration_minutes,
             step_size_seconds=0.1,
-            output_format='list'
+            output_format='list',
+            progress_bar=progress_bar,
+            notebook=notebook
         )
         tray_interactions.extend(tray_interactions_day)
         material_interactions.extend(material_interactions_day)
@@ -70,7 +82,9 @@ def generate_interaction_data_day(
     tray_carry_duration_seconds=10,
     material_usage_duration_minutes=40,
     step_size_seconds=0.1,
-    output_format='list'
+    output_format='list',
+    progress_bar=False,
+    notebook=False
 ):
     # Parse date
     target_date = pd.to_datetime(target_date).date()
@@ -152,7 +166,9 @@ def generate_interaction_data_day(
         tray_carry_duration_seconds=tray_carry_duration_seconds,
         material_usage_duration_minutes=material_usage_duration_minutes,
         step_size_seconds=step_size_seconds,
-        output_format=output_format
+        output_format=output_format,
+        progress_bar=progress_bar,
+        notebook=notebook
     )
     return tray_interactions, material_interactions
 
@@ -165,7 +181,9 @@ def generate_interaction_data_timespan(
     tray_carry_duration_seconds=10,
     material_usage_duration_minutes=40,
     step_size_seconds=0.1,
-    output_format='list'
+    output_format='list',
+    progress_bar=False,
+    notebook=False
 ):
     logger.info('Generating data from {} to {}'.format(start, end))
     logger.info('Generating data for {} students'.format(len(student_person_ids)))
@@ -190,7 +208,14 @@ def generate_interaction_data_timespan(
     time_series = dict()
     tray_interactions = dict()
     material_interactions = dict()
-    for step_index in tqdm.tqdm(range(num_steps)):
+    if progress_bar:
+        if notebook:
+            time_step_iterator = tqdm.notebook.tqdm(range(num_steps))
+        else:
+            time_step_iterator = tqdm.tqdm(range(num_steps))
+    else:
+        time_step_iterator = range(num_steps)
+    for step_index in time_step_iterator:
         timestamp = start + datetime.timedelta(seconds = step_index*step_size_seconds)
         for student_person_id in student_states.keys():
             if student_states[student_person_id]['state'] == 'idle':
