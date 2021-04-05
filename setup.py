@@ -16,7 +16,8 @@ BASE_DEPENDENCIES = [
     'pandas>=1.2',
     'numpy>=1.20',
     'python-dateutil>=2.8',
-    'inflection>=0.5'
+    'inflection>=0.5',
+    'tqdm>=4.59'
 ]
 
 # TEST_DEPENDENCIES = [
