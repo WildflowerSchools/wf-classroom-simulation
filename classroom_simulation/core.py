@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 def generate_interaction_data_day(
     target_date,
     time_zone_name,
-    student_person_ids,
-    material_id_lookup,
+    environment_id=None,
+    environment_name=None,
     start_hour = 8,
     end_hour = 16,
     idle_duration_minutes=20,
@@ -21,6 +21,7 @@ def generate_interaction_data_day(
     material_usage_duration_minutes=40,
     step_size_seconds=0.1
 ):
+    # Parse date
     target_date = pd.to_datetime(target_date).date()
     day_start = datetime.datetime(
         target_date.year,
@@ -36,6 +37,61 @@ def generate_interaction_data_day(
         end_hour,
         tzinfo=dateutil.tz.gettz(time_zone_name)
     )
+    logger.info('Preparing to generate data from {} to {}'.format(
+        day_start,
+        day_end
+    ))
+    # Fetch person data
+    persons_df = honeycomb_io.fetch_persons(
+        person_ids=None,
+        person_types=['STUDENT'],
+        names=None,
+        first_names=None,
+        last_names=None,
+        nicknames=None,
+        short_names=None,
+        environment_id=environment_id,
+        environment_name=environment_name,
+        start=day_start,
+        end=day_end,
+        output_format='dataframe'
+    )
+    student_person_ids = persons_df.index.unique().tolist()
+    logger.info('Fetched {} students assigned to the specified environment on specified date'.format(
+        len(student_person_ids)
+    ))
+    # Fetch tray and material data
+    trays_df = honeycomb_io.fetch_trays(
+        tray_ids=None,
+        part_numbers=None,
+        serial_numbers=None,
+        names=None,
+        environment_id=environment_id,
+        environment_name=environment_name,
+        start=day_start,
+        end=day_end,
+        output_format='dataframe'
+    )
+    all_tray_ids = trays_df.index.unique().tolist()
+    tray_material_assignments_df = honeycomb_io.fetch_tray_material_assignments_by_tray_id(
+        tray_ids=all_tray_ids,
+        start=day_start,
+        end=day_end,
+        require_unique_assignment=True,
+        require_all_trays=False,
+        output_format='dataframe'
+    )
+    trays_df = trays_df.join(
+        tray_material_assignments_df.set_index('tray_id'),
+        how='inner'
+    )
+    tray_ids = trays_df.index.tolist()
+    material_ids = trays_df['material_id'].tolist()
+    material_id_lookup = {tray_id: material_id for tray_id, material_id in zip(tray_ids, material_ids)}
+    logger.info('Fetched {} trays assigned to the specified environment on specified date with materials assigned to them'.format(
+        len(material_id_lookup)
+    ))
+    # Generate data
     tray_interactions, material_interactions = generate_interaction_data(
         start=day_start,
         end=day_end,
