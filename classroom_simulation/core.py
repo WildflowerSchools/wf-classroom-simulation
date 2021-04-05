@@ -9,6 +9,49 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def generate_interaction_data(
+    start_date,
+    end_date,
+    time_zone_name,
+    weekdays_only='True',
+    environment_id=None,
+    environment_name=None,
+    start_hour = 8,
+    end_hour = 16,
+    idle_duration_minutes=20,
+    tray_carry_duration_seconds=10,
+    material_usage_duration_minutes=40,
+    step_size_seconds=0.1
+):
+    if weekdays_only:
+        freq='B'
+    else:
+        freq='D'
+    date_range = pd.date_range(
+        start=start_date,
+        end=end_date,
+        freq=freq
+    )
+    date_list = [datetime.date() for datetime in date_range]
+    tray_interactions = list()
+    material_interactions = list()
+    for target_date in date_list:
+        tray_interactions_day, material_interactions_day = generate_interaction_data_day(
+            target_date=target_date,
+            time_zone_name=time_zone_name,
+            environment_id=environment_id,
+            environment_name=environment_name,
+            start_hour = start_hour,
+            end_hour = end_hour,
+            idle_duration_minutes=idle_duration_minutes,
+            tray_carry_duration_seconds=tray_carry_duration_seconds,
+            material_usage_duration_minutes=material_usage_duration_minutes,
+            step_size_seconds=0.1
+        )
+        tray_interactions.extend(tray_interactions_day)
+        material_interactions.extend(material_interactions_day)
+    return tray_interactions, material_interactions
+
 def generate_interaction_data_day(
     target_date,
     time_zone_name,
@@ -92,7 +135,7 @@ def generate_interaction_data_day(
         len(material_id_lookup)
     ))
     # Generate data
-    tray_interactions, material_interactions = generate_interaction_data(
+    tray_interactions, material_interactions = generate_interaction_data_timespan(
         start=day_start,
         end=day_end,
         student_person_ids=student_person_ids,
@@ -104,7 +147,7 @@ def generate_interaction_data_day(
     )
     return tray_interactions, material_interactions
 
-def generate_interaction_data(
+def generate_interaction_data_timespan(
     start,
     end,
     student_person_ids,
@@ -208,4 +251,4 @@ def generate_interaction_data(
                 raise ValueError('Student state \'{}\' not recognized'.format(
                     student_states[student_person_id]['state']
                 ))
-    return tray_interactions, material_interactions
+    return tray_interactions.values(), material_interactions.values()
