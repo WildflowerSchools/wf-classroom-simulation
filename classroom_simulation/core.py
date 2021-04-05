@@ -67,7 +67,13 @@ def generate_interaction_data(
     if output_format == 'list':
         return tray_interactions, material_interactions
     elif output_format == 'dataframe':
-        return pd.DataFrame(tray_interactions), pd.DataFrame(material_interactions)
+        tray_interactions_df = pd.DataFrame(tray_interactions)
+        tray_interactions_df['start'] = pd.to_datetime(tray_interactions_df['start'])
+        tray_interactions_df['end'] = pd.to_datetime(tray_interactions_df['end'])
+        material_interactions_df = pd.DataFrame(tray_interactions)
+        material_interactions_df['start'] = pd.to_datetime(material_interactions_df['start'])
+        material_interactions_df['end'] = pd.to_datetime(material_interactions_df['end'])
+        return tray_interactions_df, material_interactions_df
     else:
         raise ValueError('Output format must be \'list\' or \'dataframe\'')
 
@@ -232,7 +238,7 @@ def generate_interaction_data_timespan(
                 tray_interactions[tray_interaction_id] = {
                     'person': student_person_id,
                     'tray': selected_tray_id,
-                    'start': timestamp,
+                    'start': honeycomb_io.to_honeycomb_datetime(timestamp),
                     'interaction_type': 'CARRYING_FROM_SHELF'
                 }
                 student_states[student_person_id]['state'] = 'carrying_from_shelf'
@@ -248,9 +254,9 @@ def generate_interaction_data_timespan(
                 material_interactions[material_interaction_id] = {
                     'person': student_person_id,
                     'material': material_id,
-                    'start': timestamp
+                    'start': honeycomb_io.to_honeycomb_datetime(timestamp)
                 }
-                tray_interactions[tray_interaction_id]['end'] = timestamp
+                tray_interactions[tray_interaction_id]['end'] = honeycomb_io.to_honeycomb_datetime(timestamp)
                 student_states[student_person_id]['state'] = 'using_material'
                 student_states[student_person_id]['tray_interaction_id'] = None
                 student_states[student_person_id]['material_interaction_id'] = material_interaction_id
@@ -265,10 +271,10 @@ def generate_interaction_data_timespan(
                 tray_interactions[tray_interaction_id] = {
                     'person': student_person_id,
                     'tray': tray_id,
-                    'start': timestamp,
+                    'start': honeycomb_io.to_honeycomb_datetime(timestamp),
                     'interaction_type': 'CARRYING_TO_SHELF'
                 }
-                material_interactions[material_interaction_id]['end'] = timestamp
+                material_interactions[material_interaction_id]['end'] = honeycomb_io.to_honeycomb_datetime(timestamp)
                 student_states[student_person_id]['state'] = 'carrying_to_shelf'
                 student_states[student_person_id]['tray_interaction_id'] = tray_interaction_id
                 student_states[student_person_id]['material_interaction_id'] = None
@@ -278,7 +284,7 @@ def generate_interaction_data_timespan(
                     continue
                 tray_interaction_id = student_states[student_person_id]['tray_interaction_id']
                 tray_id = tray_interactions[tray_interaction_id]['tray']
-                tray_interactions[tray_interaction_id]['end'] = timestamp
+                tray_interactions[tray_interaction_id]['end'] = honeycomb_io.to_honeycomb_datetime(timestamp)
                 student_states[student_person_id]['state'] = 'idle'
                 student_states[student_person_id]['tray_interaction_id'] = None
                 tray_states[tray_id] = 'on_shelf'
@@ -289,6 +295,12 @@ def generate_interaction_data_timespan(
     if output_format == 'list':
         return tray_interactions.values(), material_interactions.values()
     elif output_format == 'dataframe':
-        return pd.DataFrame(tray_interactions.values()), pd.DataFrame(material_interactions.values())
+        tray_interactions_df = pd.DataFrame(tray_interactions.values())
+        tray_interactions_df['start'] = pd.to_datetime(tray_interactions_df['start'])
+        tray_interactions_df['end'] = pd.to_datetime(tray_interactions_df['end'])
+        material_interactions_df = pd.DataFrame(tray_interactions.values())
+        material_interactions_df['start'] = pd.to_datetime(material_interactions_df['start'])
+        material_interactions_df['end'] = pd.to_datetime(material_interactions_df['end'])
+        return tray_interactions_df, material_interactions_df
     else:
         raise ValueError('Output format must be \'list\' or \'dataframe\'')
