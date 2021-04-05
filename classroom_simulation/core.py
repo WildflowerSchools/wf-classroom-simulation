@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def generate_data_day(
+def generate_interaction_data_day(
     target_date,
     time_zone_name,
     student_person_ids,
@@ -36,7 +36,29 @@ def generate_data_day(
         end_hour,
         tzinfo=dateutil.tz.gettz(time_zone_name)
     )
-    logger.info('Generating data from {} to {}'.format(day_start, day_end))
+    tray_interactions, material_interactions = generate_interaction_data(
+        start=day_start,
+        end=day_end,
+        student_person_ids=student_person_ids,
+        material_id_lookup=material_id_lookup,
+        idle_duration_minutes=idle_duration_minutes,
+        tray_carry_duration_seconds=tray_carry_duration_seconds,
+        material_usage_duration_minutes=material_usage_duration_minutes,
+        step_size_seconds=step_size_seconds
+    )
+    return tray_interactions, material_interactions
+
+def generate_interaction_data(
+    start,
+    end,
+    student_person_ids,
+    material_id_lookup,
+    idle_duration_minutes=20,
+    tray_carry_duration_seconds=10,
+    material_usage_duration_minutes=40,
+    step_size_seconds=0.1
+):
+    logger.info('Generating data from {} to {}'.format(start, end))
     logger.info('Generating data for {} students'.format(len(student_person_ids)))
     tray_ids = list(material_id_lookup.keys())
     material_ids = list(material_id_lookup.values())
@@ -55,12 +77,12 @@ def generate_data_day(
     for tray_id in tray_ids:
         tray_states[tray_id] = 'on_shelf'
     # Generate data
-    num_steps = round((day_end - day_start).total_seconds()/step_size_seconds)
+    num_steps = round((end - start).total_seconds()/step_size_seconds)
     time_series = dict()
     tray_interactions = dict()
     material_interactions = dict()
     for step_index in tqdm.tqdm(range(num_steps)):
-        timestamp = day_start + datetime.timedelta(seconds = step_index*step_size_seconds)
+        timestamp = start + datetime.timedelta(seconds = step_index*step_size_seconds)
         for student_person_id in student_states.keys():
             if student_states[student_person_id]['state'] == 'idle':
                 if random.random() > step_size_seconds/(idle_duration_minutes*60):
