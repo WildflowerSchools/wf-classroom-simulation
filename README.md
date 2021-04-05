@@ -1,10 +1,10 @@
-# MODULE_NAME
+# classroom_simulation
 
-SHORT_DESCRIPTION
+Tools to simulate Wildflower classroom data
 
 ## Installation
 
-`pip install PYPI_PACKAGE_NAME`
+`pip install wf-classroom-simulation`
 
 ## Task list
 * TBD
