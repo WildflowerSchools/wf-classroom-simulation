@@ -21,7 +21,8 @@ def generate_interaction_data(
     idle_duration_minutes=20,
     tray_carry_duration_seconds=10,
     material_usage_duration_minutes=40,
-    step_size_seconds=0.1
+    step_size_seconds=0.1,
+    output_format='list'
 ):
     if weekdays_only:
         freq='B'
@@ -46,11 +47,17 @@ def generate_interaction_data(
             idle_duration_minutes=idle_duration_minutes,
             tray_carry_duration_seconds=tray_carry_duration_seconds,
             material_usage_duration_minutes=material_usage_duration_minutes,
-            step_size_seconds=0.1
+            step_size_seconds=0.1,
+            output_format='list'
         )
         tray_interactions.extend(tray_interactions_day)
         material_interactions.extend(material_interactions_day)
-    return tray_interactions, material_interactions
+    if output_format == 'list':
+        return tray_interactions, material_interactions
+    elif output_format == 'dataframe':
+        return pd.DataFrame(tray_interactions), pd.DataFrame(material_interactions)
+    else:
+        raise ValueError('Output format must be \'list\' or \'dataframe\'')
 
 def generate_interaction_data_day(
     target_date,
@@ -62,7 +69,8 @@ def generate_interaction_data_day(
     idle_duration_minutes=20,
     tray_carry_duration_seconds=10,
     material_usage_duration_minutes=40,
-    step_size_seconds=0.1
+    step_size_seconds=0.1,
+    output_format='list'
 ):
     # Parse date
     target_date = pd.to_datetime(target_date).date()
@@ -143,7 +151,8 @@ def generate_interaction_data_day(
         idle_duration_minutes=idle_duration_minutes,
         tray_carry_duration_seconds=tray_carry_duration_seconds,
         material_usage_duration_minutes=material_usage_duration_minutes,
-        step_size_seconds=step_size_seconds
+        step_size_seconds=step_size_seconds,
+        output_format=output_format
     )
     return tray_interactions, material_interactions
 
@@ -155,7 +164,8 @@ def generate_interaction_data_timespan(
     idle_duration_minutes=20,
     tray_carry_duration_seconds=10,
     material_usage_duration_minutes=40,
-    step_size_seconds=0.1
+    step_size_seconds=0.1,
+    output_format='list'
 ):
     logger.info('Generating data from {} to {}'.format(start, end))
     logger.info('Generating data for {} students'.format(len(student_person_ids)))
@@ -251,4 +261,9 @@ def generate_interaction_data_timespan(
                 raise ValueError('Student state \'{}\' not recognized'.format(
                     student_states[student_person_id]['state']
                 ))
-    return tray_interactions.values(), material_interactions.values()
+    if output_format == 'list':
+        return tray_interactions.values(), material_interactions.values()
+    elif output_format == 'dataframe':
+        return pd.DataFrame(tray_interactions.values()), pd.DataFrame(material_interactions.values())
+    else:
+        raise ValueError('Output format must be \'list\' or \'dataframe\'')
